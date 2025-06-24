@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanFit - Workout Planner</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;family=Poppins:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00E676', // neon green
+                        secondary: '#00B0FF', // electric blue
+                        accent: '#FF6E40', // warm orange
+                        dark: '#121212',
+                        light: '#F5F5F5',
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #121212;
+            color: #F5F5F5;
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #00E676, #00B0FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #00E676, #00B0FF);
+        }
+
+        .card {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 230, 118, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00E676, #00B0FF);
+            color: #121212;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 230, 118, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #F5F5F5;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .active-page {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(0, 230, 118, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(0, 176, 255, 0.3) 0%, transparent 50%);
+        }
+
+        /* Custom checkbox styling */
+        .custom-checkbox {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(30, 30, 30, 0.8);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .custom-checkbox:checked {
+            background: linear-gradient(90deg, #00E676, #00B0FF);
+            border-color: transparent;
+        }
+
+        .custom-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: #121212;
+            font-weight: bold;
+            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Custom select styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px !important;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 30, 30, 0.8);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00E676, #00B0FF);
+            border-radius: 4px;
+        }
+
+        /* Animations */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-5px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(5px);
+            }
+        }
+    </style>
+    <style>
+        *,
+        ::before,
+        ::after {
+            --tw-border-spacing-x: 0;
+            --tw-border-spacing-y: 0;
+            --tw-translate-x: 0;
+            --tw-translate-y: 0;
+            --tw-rotate: 0;
+            --tw-skew-x: 0;
+            --tw-skew-y: 0;
+            --tw-scale-x: 1;
+            --tw-scale-y: 1;
+            --tw-pan-x: ;
+            --tw-pan-y: ;
+            --tw-pinch-zoom: ;
+            --tw-scroll-snap-strictness: proximity;
+            --tw-gradient-from-position: ;
+            --tw-gradient-via-position: ;
+            --tw-gradient-to-position: ;
+            --tw-ordinal: ;
+            --tw-slashed-zero: ;
+            --tw-numeric-figure: ;
+            --tw-numeric-spacing: ;
+            --tw-numeric-fraction: ;
+            --tw-ring-inset: ;
+            --tw-ring-offset-width: 0px;
+            --tw-ring-offset-color: #fff;
+            --tw-ring-color: rgb(59 130 246 / 0.5);
+            --tw-ring-offset-shadow: 0 0 #0000;
+            --tw-ring-shadow: 0 0 #0000;
+            --tw-shadow: 0 0 #0000;
+            --tw-shadow-colored: 0 0 #0000;
+            --tw-blur: ;
+            --tw-brightness: ;
+            --tw-contrast: ;
+            --tw-grayscale: ;
+            --tw-hue-rotate: ;
+            --tw-invert: ;
+            --tw-saturate: ;
+            --tw-sepia: ;
+            --tw-drop-shadow: ;
+            --tw-backdrop-blur: ;
+            --tw-backdrop-brightness: ;
+            --tw-backdrop-contrast: ;
+            --tw-backdrop-grayscale: ;
+            --tw-backdrop-hue-rotate: ;
+            --tw-backdrop-invert: ;
+            --tw-backdrop-opacity: ;
+            --tw-backdrop-saturate: ;
+            --tw-backdrop-sepia: ;
+            --tw-contain-size: ;
+            --tw-contain-layout: ;
+            --tw-contain-paint: ;
+            --tw-contain-style:
+        }
+
+        ::backdrop {
+            --tw-border-spacing-x: 0;
+            --tw-border-spacing-y: 0;
+            --tw-translate-x: 0;
+            --tw-translate-y: 0;
+            --tw-rotate: 0;
+            --tw-skew-x: 0;
+            --tw-skew-y: 0;
+            --tw-scale-x: 1;
+            --tw-scale-y: 1;
+            --tw-pan-x: ;
+            --tw-pan-y: ;
+            --tw-pinch-zoom: ;
+            --tw-scroll-snap-strictness: proximity;
+            --tw-gradient-from-position: ;
+            --tw-gradient-via-position: ;
+            --tw-gradient-to-position: ;
+            --tw-ordinal: ;
+            --tw-slashed-zero: ;
+            --tw-numeric-figure: ;
+            --tw-numeric-spacing: ;
+            --tw-numeric-fraction: ;
+            --tw-ring-inset: ;
+            --tw-ring-offset-width: 0px;
+            --tw-ring-offset-color: #fff;
+            --tw-ring-color: rgb(59 130 246 / 0.5);
+            --tw-ring-offset-shadow: 0 0 #0000;
+            --tw-ring-shadow: 0 0 #0000;
+            --tw-shadow: 0 0 #0000;
+            --tw-shadow-colored: 0 0 #0000;
+            --tw-blur: ;
+            --tw-brightness: ;
+            --tw-contrast: ;
+            --tw-grayscale: ;
+            --tw-hue-rotate: ;
+            --tw-invert: ;
+            --tw-saturate: ;
+            --tw-sepia: ;
+            --tw-drop-shadow: ;
+            --tw-backdrop-blur: ;
+            --tw-backdrop-brightness: ;
+            --tw-backdrop-contrast: ;
+            --tw-backdrop-grayscale: ;
+            --tw-backdrop-hue-rotate: ;
+            --tw-backdrop-invert: ;
+            --tw-backdrop-opacity: ;
+            --tw-backdrop-saturate: ;
+            --tw-backdrop-sepia: ;
+            --tw-contain-size: ;
+            --tw-contain-layout: ;
+            --tw-contain-paint: ;
+            --tw-contain-style:
+        }
+
+        /* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */
+        *,
+        ::after,
+        ::before {
+            box-sizing: border-box;
+            border-width: 0;
+            border-style: solid;
+            border-color: #e5e7eb
+        }
+
+        ::after,
+        ::before {
+            --tw-content: ''
+        }
+
+        :host,
+        html {
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+            -moz-tab-size: 4;
+            tab-size: 4;
+            font-family: Montserrat, sans-serif;
+            font-feature-settings: normal;
+            font-variation-settings: normal;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        body {
+            margin: 0;
+            line-height: inherit
+        }
+
+        hr {
+            height: 0;
+            color: inherit;
+            border-top-width: 1px
+        }
+
+        abbr:where([title]) {
+            -webkit-text-decoration: underline dotted;
+            text-decoration: underline dotted
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-size: inherit;
+            font-weight: inherit
+        }
+
+        a {
+            color: inherit;
+            text-decoration: inherit
+        }
+
+        b,
+        strong {
+            font-weight: bolder
+        }
+
+        code,
+        kbd,
+        pre,
+        samp {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-feature-settings: normal;
+            font-variation-settings: normal;
+            font-size: 1em
+        }
+
+        small {
+            font-size: 80%
+        }
+
+        sub,
+        sup {
+            font-size: 75%;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline
+        }
+
+        sub {
+            bottom: -.25em
+        }
+
+        sup {
+            top: -.5em
+        }
+
+        table {
+            text-indent: 0;
+            border-color: inherit;
+            border-collapse: collapse
+        }
+
+        button,
+        input,
+        optgroup,
+        select,
+        textarea {
+            font-family: inherit;
+            font-feature-settings: inherit;
+            font-variation-settings: inherit;
+            font-size: 100%;
+            font-weight: inherit;
+            line-height: inherit;
+            letter-spacing: inherit;
+            color: inherit;
+            margin: 0;
+            padding: 0
+        }
+
+        button,
+        select {
+            text-transform: none
+        }
+
+        button,
+        input:where([type=button]),
+        input:where([type=reset]),
+        input:where([type=submit]) {
+            -webkit-appearance: button;
+            background-color: transparent;
+            background-image: none
+        }
+
+        :-moz-focusring {
+            outline: auto
+        }
+
+        :-moz-ui-invalid {
+            box-shadow: none
+        }
+
+        progress {
+            vertical-align: baseline
+        }
+
+        ::-webkit-inner-spin-button,
+        ::-webkit-outer-spin-button {
+            height: auto
+        }
+
+        [type=search] {
+            -webkit-appearance: textfield;
+            outline-offset: -2px
+        }
+
+        ::-webkit-search-decoration {
+            -webkit-appearance: none
+        }
+
+        ::-webkit-file-upload-button {
+            -webkit-appearance: button;
+            font: inherit
+        }
+
+        summary {
+            display: list-item
+        }
+
+        blockquote,
+        dd,
+        dl,
+        figure,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        hr,
+        p,
+        pre {
+            margin: 0
+        }
+
+        fieldset {
+            margin: 0;
+            padding: 0
+        }
+
+        legend {
+            padding: 0
+        }
+
+        menu,
+        ol,
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0
+        }
+
+        dialog {
+            padding: 0
+        }
+
+        textarea {
+            resize: vertical
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            opacity: 1;
+            color: #9ca3af
+        }
+
+        [role=button],
+        button {
+            cursor: pointer
+        }
+
+        :disabled {
+            cursor: default
+        }
+
+        audio,
+        canvas,
+        embed,
+        iframe,
+        img,
+        object,
+        svg,
+        video {
+            display: block;
+            vertical-align: middle
+        }
+
+        img,
+        video {
+            max-width: 100%;
+            height: auto
+        }
+
+        [hidden]:where(:not([hidden=until-found])) {
+            display: none
+        }
+
+        .container {
+            width: 100%
+        }
+
+        @media (min-width: 640px) {
+            .container {
+                max-width: 640px
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 768px
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 1024px
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .container {
+                max-width: 1280px
+            }
+        }
+
+        @media (min-width: 1536px) {
+            .container {
+                max-width: 1536px
+            }
+        }
+
+        .fixed {
+            position: fixed
+        }
+
+        .relative {
+            position: relative
+        }
+
+        .bottom-0 {
+            bottom: 0px
+        }
+
+        .left-0 {
+            left: 0px
+        }
+
+        .z-50 {
+            z-index: 50
+        }
+
+        .mx-2 {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto
+        }
+
+        .mb-1 {
+            margin-bottom: 0.25rem
+        }
+
+        .mb-10 {
+            margin-bottom: 2.5rem
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem
+        }
+
+        .mb-3 {
+            margin-bottom: 0.75rem
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem
+        }
+
+        .mb-8 {
+            margin-bottom: 2rem
+        }
+
+        .ml-2 {
+            margin-left: 0.5rem
+        }
+
+        .mr-1 {
+            margin-right: 0.25rem
+        }
+
+        .mr-2 {
+            margin-right: 0.5rem
+        }
+
+        .mr-3 {
+            margin-right: 0.75rem
+        }
+
+        .mt-1 {
+            margin-top: 0.25rem
+        }
+
+        .mt-10 {
+            margin-top: 2.5rem
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem
+        }
+
+        .mt-3 {
+            margin-top: 0.75rem
+        }
+
+        .block {
+            display: block
+        }
+
+        .flex {
+            display: flex
+        }
+
+        .grid {
+            display: grid
+        }
+
+        .hidden {
+            display: none
+        }
+
+        .h-2 {
+            height: 0.5rem
+        }
+
+        .h-64 {
+            height: 16rem
+        }
+
+        .h-auto {
+            height: auto
+        }
+
+        .h-full {
+            height: 100%
+        }
+
+        .min-h-\[80vh\] {
+            min-height: 80vh
+        }
+
+        .w-2 {
+            width: 0.5rem
+        }
+
+        .w-full {
+            width: 100%
+        }
+
+        .min-w-\[70px\] {
+            min-width: 70px
+        }
+
+        .min-w-max {
+            min-width: max-content
+        }
+
+        .max-w-4xl {
+            max-width: 56rem
+        }
+
+        .max-w-6xl {
+            max-width: 72rem
+        }
+
+        .flex-1 {
+            flex: 1 1 0%
+        }
+
+        .flex-grow {
+            flex-grow: 1
+        }
+
+        .grid-cols-1 {
+            grid-template-columns: repeat(1, minmax(0, 1fr))
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr))
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr))
+        }
+
+        .grid-cols-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr))
+        }
+
+        .flex-col {
+            flex-direction: column
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap
+        }
+
+        .items-start {
+            align-items: flex-start
+        }
+
+        .items-center {
+            align-items: center
+        }
+
+        .justify-end {
+            justify-content: flex-end
+        }
+
+        .justify-center {
+            justify-content: center
+        }
+
+        .justify-between {
+            justify-content: space-between
+        }
+
+        .justify-around {
+            justify-content: space-around
+        }
+
+        .gap-10 {
+            gap: 2.5rem
+        }
+
+        .gap-2 {
+            gap: 0.5rem
+        }
+
+        .gap-4 {
+            gap: 1rem
+        }
+
+        .gap-6 {
+            gap: 1.5rem
+        }
+
+        .space-x-1> :not([hidden])~ :not([hidden]) {
+            --tw-space-x-reverse: 0;
+            margin-right: calc(0.25rem * var(--tw-space-x-reverse));
+            margin-left: calc(0.25rem * calc(1 - var(--tw-space-x-reverse)))
+        }
+
+        .space-x-2> :not([hidden])~ :not([hidden]) {
+            --tw-space-x-reverse: 0;
+            margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+            margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)))
+        }
+
+        .space-y-4> :not([hidden])~ :not([hidden]) {
+            --tw-space-y-reverse: 0;
+            margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+            margin-bottom: calc(1rem * var(--tw-space-y-reverse))
+        }
+
+        .space-y-6> :not([hidden])~ :not([hidden]) {
+            --tw-space-y-reverse: 0;
+            margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+            margin-bottom: calc(1.5rem * var(--tw-space-y-reverse))
+        }
+
+        .overflow-x-auto {
+            overflow-x: auto
+        }
+
+        .whitespace-nowrap {
+            white-space: nowrap
+        }
+
+        .rounded-full {
+            border-radius: 9999px
+        }
+
+        .rounded-lg {
+            border-radius: 0.5rem
+        }
+
+        .rounded-xl {
+            border-radius: 0.75rem
+        }
+
+        .border {
+            border-width: 1px
+        }
+
+        .border-b {
+            border-bottom-width: 1px
+        }
+
+        .border-b-2 {
+            border-bottom-width: 2px
+        }
+
+        .border-t {
+            border-top-width: 1px
+        }
+
+        .border-dashed {
+            border-style: dashed
+        }
+
+        .border-accent\/30 {
+            border-color: rgb(255 110 64 / 0.3)
+        }
+
+        .border-gray-600 {
+            --tw-border-opacity: 1;
+            border-color: rgb(75 85 99 / var(--tw-border-opacity, 1))
+        }
+
+        .border-gray-700 {
+            --tw-border-opacity: 1;
+            border-color: rgb(55 65 81 / var(--tw-border-opacity, 1))
+        }
+
+        .border-gray-800 {
+            --tw-border-opacity: 1;
+            border-color: rgb(31 41 55 / var(--tw-border-opacity, 1))
+        }
+
+        .border-primary {
+            --tw-border-opacity: 1;
+            border-color: rgb(0 230 118 / var(--tw-border-opacity, 1))
+        }
+
+        .border-primary\/30 {
+            border-color: rgb(0 230 118 / 0.3)
+        }
+
+        .border-secondary\/30 {
+            border-color: rgb(0 176 255 / 0.3)
+        }
+
+        .bg-accent {
+            --tw-bg-opacity: 1;
+            background-color: rgb(255 110 64 / var(--tw-bg-opacity, 1))
+        }
+
+        .bg-accent\/20 {
+            background-color: rgb(255 110 64 / 0.2)
+        }
+
+        .bg-dark {
+            --tw-bg-opacity: 1;
+            background-color: rgb(18 18 18 / var(--tw-bg-opacity, 1))
+        }
+
+        .bg-dark\/30 {
+            background-color: rgb(18 18 18 / 0.3)
+        }
+
+        .bg-dark\/50 {
+            background-color: rgb(18 18 18 / 0.5)
+        }
+
+        .bg-gray-700 {
+            --tw-bg-opacity: 1;
+            background-color: rgb(55 65 81 / var(--tw-bg-opacity, 1))
+        }
+
+        .bg-primary {
+            --tw-bg-opacity: 1;
+            background-color: rgb(0 230 118 / var(--tw-bg-opacity, 1))
+        }
+
+        .bg-primary\/20 {
+            background-color: rgb(0 230 118 / 0.2)
+        }
+
+        .bg-secondary {
+            --tw-bg-opacity: 1;
+            background-color: rgb(0 176 255 / var(--tw-bg-opacity, 1))
+        }
+
+        .bg-secondary\/20 {
+            background-color: rgb(0 176 255 / 0.2)
+        }
+
+        .bg-transparent {
+            background-color: transparent
+        }
+
+        .p-2 {
+            padding: 0.5rem
+        }
+
+        .p-3 {
+            padding: 0.75rem
+        }
+
+        .p-4 {
+            padding: 1rem
+        }
+
+        .p-5 {
+            padding: 1.25rem
+        }
+
+        .p-6 {
+            padding: 1.5rem
+        }
+
+        .px-2 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem
+        }
+
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem
+        }
+
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem
+        }
+
+        .py-1 {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem
+        }
+
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem
+        }
+
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem
+        }
+
+        .pb-2 {
+            padding-bottom: 0.5rem
+        }
+
+        .pb-20 {
+            padding-bottom: 5rem
+        }
+
+        .pb-24 {
+            padding-bottom: 6rem
+        }
+
+        .pt-6 {
+            padding-top: 1.5rem
+        }
+
+        .text-center {
+            text-align: center
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem
+        }
+
+        .text-3xl {
+            font-size: 1.875rem;
+            line-height: 2.25rem
+        }
+
+        .text-4xl {
+            font-size: 2.25rem;
+            line-height: 2.5rem
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+            line-height: 1.75rem
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+            line-height: 1.25rem
+        }
+
+        .text-xl {
+            font-size: 1.25rem;
+            line-height: 1.75rem
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+            line-height: 1rem
+        }
+
+        .font-bold {
+            font-weight: 700
+        }
+
+        .font-medium {
+            font-weight: 500
+        }
+
+        .font-semibold {
+            font-weight: 600
+        }
+
+        .text-accent {
+            --tw-text-opacity: 1;
+            color: rgb(255 110 64 / var(--tw-text-opacity, 1))
+        }
+
+        .text-dark {
+            --tw-text-opacity: 1;
+            color: rgb(18 18 18 / var(--tw-text-opacity, 1))
+        }
+
+        .text-gray-300 {
+            --tw-text-opacity: 1;
+            color: rgb(209 213 219 / var(--tw-text-opacity, 1))
+        }
+
+        .text-gray-400 {
+            --tw-text-opacity: 1;
+            color: rgb(156 163 175 / var(--tw-text-opacity, 1))
+        }
+
+        .text-primary {
+            --tw-text-opacity: 1;
+            color: rgb(0 230 118 / var(--tw-text-opacity, 1))
+        }
+
+        .text-secondary {
+            --tw-text-opacity: 1;
+            color: rgb(0 176 255 / var(--tw-text-opacity, 1))
+        }
+
+        .text-white {
+            --tw-text-opacity: 1;
+            color: rgb(255 255 255 / var(--tw-text-opacity, 1))
+        }
+
+        .opacity-70 {
+            opacity: 0.7
+        }
+
+        .transition-colors {
+            transition-property: color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms
+        }
+
+        .hover\:border-primary:hover {
+            --tw-border-opacity: 1;
+            border-color: rgb(0 230 118 / var(--tw-border-opacity, 1))
+        }
+
+        .hover\:text-primary:hover {
+            --tw-text-opacity: 1;
+            color: rgb(0 230 118 / var(--tw-text-opacity, 1))
+        }
+
+        .hover\:text-red-500:hover {
+            --tw-text-opacity: 1;
+            color: rgb(239 68 68 / var(--tw-text-opacity, 1))
+        }
+
+        .focus\:outline-none:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px
+        }
+
+        .focus\:ring-2:focus {
+            --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+            --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+            box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)
+        }
+
+        .focus\:ring-primary:focus {
+            --tw-ring-opacity: 1;
+            --tw-ring-color: rgb(0 230 118 / var(--tw-ring-opacity, 1))
+        }
+
+        @media (min-width: 640px) {
+            .sm\:flex-row {
+                flex-direction: row
+            }
+        }
+
+        @media (min-width: 768px) {
+            .md\:bottom-auto {
+                bottom: auto
+            }
+
+            .md\:top-0 {
+                top: 0px
+            }
+
+            .md\:mt-0 {
+                margin-top: 0px
+            }
+
+            .md\:block {
+                display: block
+            }
+
+            .md\:w-1\/2 {
+                width: 50%
+            }
+
+            .md\:w-1\/3 {
+                width: 33.333333%
+            }
+
+            .md\:w-2\/3 {
+                width: 66.666667%
+            }
+
+            .md\:w-auto {
+                width: auto
+            }
+
+            .md\:grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr))
+            }
+
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr))
+            }
+
+            .md\:flex-row {
+                flex-direction: row
+            }
+
+            .md\:items-center {
+                align-items: center
+            }
+
+            .md\:justify-start {
+                justify-content: flex-start
+            }
+
+            .md\:justify-end {
+                justify-content: flex-end
+            }
+
+            .md\:space-x-6> :not([hidden])~ :not([hidden]) {
+                --tw-space-x-reverse: 0;
+                margin-right: calc(1.5rem * var(--tw-space-x-reverse));
+                margin-left: calc(1.5rem * calc(1 - var(--tw-space-x-reverse)))
+            }
+
+            .md\:border-b {
+                border-bottom-width: 1px
+            }
+
+            .md\:p-8 {
+                padding: 2rem
+            }
+
+            .md\:pt-20 {
+                padding-top: 5rem
+            }
+
+            .md\:text-left {
+                text-align: left
+            }
+
+            .md\:text-2xl {
+                font-size: 1.5rem;
+                line-height: 2rem
+            }
+
+            .md\:text-4xl {
+                font-size: 2.25rem;
+                line-height: 2.5rem
+            }
+
+            .md\:text-6xl {
+                font-size: 3.75rem;
+                line-height: 1
+            }
+
+            .md\:text-sm {
+                font-size: 0.875rem;
+                line-height: 1.25rem
+            }
+
+            .md\:text-xl {
+                font-size: 1.25rem;
+                line-height: 1.75rem
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-pattern"></div>
+
+    <!-- Navigation -->
+    <nav id="main-nav"
+        class="fixed bottom-0 left-0 w-full md:top-0 md:bottom-auto bg-dark border-t md:border-b border-gray-800 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-3">
+                <div class="hidden md:block">
+                    <a href="#" class="text-2xl font-bold gradient-text">PlanFit</a>
+                </div>
+
+                <div class="flex justify-around md:justify-end w-full md:w-auto space-x-1 md:space-x-6">
+                    <button onclick="showPage('home')"
+                        class="nav-btn flex flex-col items-center p-2 text-xs md:text-sm text-primary">
+                        <i class="fas fa-home text-lg md:text-xl mb-1 text-primary"></i>
+                        <span>Home</span>
+                    </button>
+                    <button onclick="showPage('split')"
+                        class="nav-btn flex flex-col items-center p-2 text-xs md:text-sm text-gray-400">
+                        <i class="fas fa-calendar-alt text-lg md:text-xl mb-1 text-primary"></i>
+                        <span>Split</span>
+                    </button>
+                    <button onclick="showPage('exercises')"
+                        class="nav-btn flex flex-col items-center p-2 text-xs md:text-sm text-gray-400">
+                        <i class="fas fa-dumbbell text-lg md:text-xl mb-1 text-primary"></i>
+                        <span>Exercises</span>
+                    </button>
+                    <button onclick="showPage('today')"
+                        class="nav-btn flex flex-col items-center p-2 text-xs md:text-sm text-gray-400">
+                        <i class="fas fa-tasks text-lg md:text-xl mb-1 text-primary"></i>
+                        <span>Today</span>
+                    </button>
+                    <button onclick="showPage('progress')"
+                        class="nav-btn flex flex-col items-center p-2 text-xs md:text-sm text-gray-400">
+                        <i class="fas fa-chart-line text-lg md:text-xl mb-1 text-primary"></i>
+                        <span>Progress</span>
+                    </button>
+                </div>
+
+                <div class="hidden md:block">
+                    <button class="btn-secondary">
+                        <i class="fas fa-user mr-2"></i>Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Homepage / Welcome Screen -->
+    <section id="home" class="page pt-6 md:pt-20 active-page">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-10 min-h-[80vh]">
+                <div class="md:w-1/2 text-center md:text-left">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-4">
+                        <span class="gradient-text">Plan. Track.</span><br>
+                        <span class="text-white">Transform.</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-gray-300 mb-8">Create your custom workout split and daily
+                        routines that fit your schedule and goals.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                        <button onclick="showPage('split')" class="btn-primary text-lg">
+                            <i class="fas fa-rocket mr-2"></i>Get Started
+                        </button>
+                        <button class="btn-secondary text-lg">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        </button>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2">
+                    <div class="relative">
+                        <svg class="w-full h-auto" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background shapes -->
+                            <circle cx="250" cy="200" r="150" fill="url(#grad1)" opacity="0.2"></circle>
+                            <circle cx="250" cy="200" r="120" fill="url(#grad1)" opacity="0.3"></circle>
+
+                            <!-- Dumbbell icon -->
+                            <g transform="translate(180, 130) scale(0.15)">
+                                <rect x="0" y="80" width="900" height="40" rx="20" fill="#00E676"></rect>
+                                <rect x="100" y="40" width="40" height="120" rx="10" fill="#F5F5F5"></rect>
+                                <rect x="760" y="40" width="40" height="120" rx="10" fill="#F5F5F5"></rect>
+                                <circle cx="70" cy="100" r="70" fill="#00B0FF"></circle>
+                                <circle cx="830" cy="100" r="70" fill="#00B0FF"></circle>
+                            </g>
+
+                            <!-- Calendar icon -->
+                            <g transform="translate(300, 200) scale(0.6)">
+                                <rect x="0" y="0" width="160" height="160" rx="15" fill="#1E1E1E" stroke="#00E676"
+                                    stroke-width="4"></rect>
+                                <rect x="20" y="40" width="120" height="100" rx="5" fill="#2A2A2A"></rect>
+                                <rect x="40" y="60" width="20" height="20" rx="3" fill="#00B0FF"></rect>
+                                <rect x="70" y="60" width="20" height="20" rx="3" fill="#F5F5F5" opacity="0.5"></rect>
+                                <rect x="100" y="60" width="20" height="20" rx="3" fill="#F5F5F5" opacity="0.5"></rect>
+                                <rect x="40" y="90" width="20" height="20" rx="3" fill="#F5F5F5" opacity="0.5"></rect>
+                                <rect x="70" y="90" width="20" height="20" rx="3" fill="#F5F5F5" opacity="0.5"></rect>
+                                <rect x="100" y="90" width="20" height="20" rx="3" fill="#FF6E40"></rect>
+                                <line x1="0" y1="30" x2="160" y2="30" stroke="#F5F5F5" stroke-width="2"></line>
+                                <circle cx="30" cy="15" r="5" fill="#F5F5F5"></circle>
+                                <circle cx="130" cy="15" r="5" fill="#F5F5F5"></circle>
+                            </g>
+
+                            <!-- Chart icon -->
+                            <g transform="translate(150, 250) scale(0.5)">
+                                <rect x="0" y="0" width="160" height="120" rx="10" fill="#1E1E1E" stroke="#00B0FF"
+                                    stroke-width="3"></rect>
+                                <line x1="20" y1="20" x2="20" y2="100" stroke="#F5F5F5" stroke-width="2"></line>
+                                <line x1="20" y1="100" x2="140" y2="100" stroke="#F5F5F5" stroke-width="2"></line>
+                                <polyline points="20,80 40,70 60,75 80,40 100,60 120,30 140,50" stroke="#00E676"
+                                    stroke-width="3" fill="none"></polyline>
+                                <circle cx="40" cy="70" r="4" fill="#00E676"></circle>
+                                <circle cx="60" cy="75" r="4" fill="#00E676"></circle>
+                                <circle cx="80" cy="40" r="4" fill="#00E676"></circle>
+                                <circle cx="100" cy="60" r="4" fill="#00E676"></circle>
+                                <circle cx="120" cy="30" r="4" fill="#00E676"></circle>
+                                <circle cx="140" cy="50" r="4" fill="#00E676"></circle>
+                            </g>
+
+                            <!-- Gradients -->
+                            <defs>
+                                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#00E676;stop-opacity:1"></stop>
+                                    <stop offset="100%" style="stop-color:#00B0FF;stop-opacity:1"></stop>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 md:mt-0 pb-20">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6">
+                        <div class="text-primary text-3xl mb-4">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Custom Workout Splits</h3>
+                        <p class="text-gray-400">Design your perfect training schedule with 3-7 day splits tailored to
+                            your goals.</p>
+                    </div>
+
+                    <div class="card p-6">
+                        <div class="text-secondary text-3xl mb-4">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Exercise Library</h3>
+                        <p class="text-gray-400">Add your favorite exercises with detailed sets, reps, and notes for
+                            each workout day.</p>
+                    </div>
+
+                    <div class="card p-6">
+                        <div class="text-accent text-3xl mb-4">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Track Progress</h3>
+                        <p class="text-gray-400">Monitor your fitness journey with detailed progress tracking and
+                            performance insights.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Split Setup Page -->
+    <section id="split" class="page pt-6 md:pt-20 pb-24">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl md:text-4xl font-bold mb-4">Customize Your Training Split</h1>
+                <p class="text-gray-300 text-lg">Design your perfect workout week by selecting how many days you'll
+                    train</p>
+            </div>
+
+            <div class="card p-6 md:p-8 mb-8">
+                <div class="mb-6">
+                    <label for="split-days" class="block text-lg font-medium mb-2">How many days is your workout
+                        split?</label>
+                    <select id="split-days"
+                        class="w-full bg-dark border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="3">3 Days</option>
+                        <option value="4">4 Days</option>
+                        <option value="5" selected="">5 Days</option>
+                        <option value="6">6 Days</option>
+                        <option value="7">7 Days</option>
+                    </select>
+                </div>
+
+                <div id="days-container" class="space-y-6">
+                    <!-- Day 1 -->
+                    <div class="day-card card p-5 border border-gray-800">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="md:w-1/3">
+                                <label class="block text-sm font-medium mb-1">Day Name</label>
+                                <input type="text" value="Push"
+                                    class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="md:w-2/3">
+                                <label class="block text-sm font-medium mb-1">Muscle Groups</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        class="bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-sm">Chest</span>
+                                    <span
+                                        class="bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-sm">Shoulders</span>
+                                    <span
+                                        class="bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-sm">Triceps</span>
+                                    <button
+                                        class="bg-dark border border-gray-700 text-gray-400 px-3 py-1 rounded-full text-sm">+
+                                        Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Day 2 -->
+                    <div class="day-card card p-5 border border-gray-800">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="md:w-1/3">
+                                <label class="block text-sm font-medium mb-1">Day Name</label>
+                                <input type="text" value="Pull"
+                                    class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="md:w-2/3">
+                                <label class="block text-sm font-medium mb-1">Muscle Groups</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        class="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-sm">Back</span>
+                                    <span
+                                        class="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-sm">Biceps</span>
+                                    <span
+                                        class="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-sm">Rear
+                                        Delts</span>
+                                    <button
+                                        class="bg-dark border border-gray-700 text-gray-400 px-3 py-1 rounded-full text-sm">+
+                                        Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Day 3 -->
+                    <div class="day-card card p-5 border border-gray-800">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="md:w-1/3">
+                                <label class="block text-sm font-medium mb-1">Day Name</label>
+                                <input type="text" value="Legs"
+                                    class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="md:w-2/3">
+                                <label class="block text-sm font-medium mb-1">Muscle Groups</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-full text-sm">Quads</span>
+                                    <span
+                                        class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-full text-sm">Hamstrings</span>
+                                    <span
+                                        class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-full text-sm">Calves</span>
+                                    <button
+                                        class="bg-dark border border-gray-700 text-gray-400 px-3 py-1 rounded-full text-sm">+
+                                        Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Day 4 -->
+                    <div class="day-card card p-5 border border-gray-800">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="md:w-1/3">
+                                <label class="block text-sm font-medium mb-1">Day Name</label>
+                                <input type="text" value="Upper"
+                                    class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="md:w-2/3">
+                                <label class="block text-sm font-medium mb-1">Muscle Groups</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        class="bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-sm">Chest</span>
+                                    <span
+                                        class="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-sm">Back</span>
+                                    <span
+                                        class="bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-sm">Shoulders</span>
+                                    <button
+                                        class="bg-dark border border-gray-700 text-gray-400 px-3 py-1 rounded-full text-sm">+
+                                        Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Day 5 -->
+                    <div class="day-card card p-5 border border-gray-800">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="md:w-1/3">
+                                <label class="block text-sm font-medium mb-1">Day Name</label>
+                                <input type="text" value="Lower"
+                                    class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="md:w-2/3">
+                                <label class="block text-sm font-medium mb-1">Muscle Groups</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-full text-sm">Quads</span>
+                                    <span
+                                        class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-full text-sm">Glutes</span>
+                                    <span
+                                        class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-full text-sm">Core</span>
+                                    <button
+                                        class="bg-dark border border-gray-700 text-gray-400 px-3 py-1 rounded-full text-sm">+
+                                        Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="showPage('exercises')" class="btn-primary">
+                    Next → Assign Exercises
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Exercise Planner Page -->
+    <section id="exercises" class="page pt-6 md:pt-20 pb-24">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl md:text-4xl font-bold mb-4">Add Exercises to Each Day</h1>
+                <p class="text-gray-300 text-lg">Build your workout routines by adding exercises to your training days
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex overflow-x-auto pb-2 gap-2 mb-4 scrollbar-thin">
+                    <button class="px-4 py-2 bg-primary text-dark font-medium rounded-xl whitespace-nowrap">Day 1:
+                        Push</button>
+                    <button
+                        class="px-4 py-2 bg-dark border border-gray-700 text-white font-medium rounded-xl whitespace-nowrap">Day
+                        2: Pull</button>
+                    <button
+                        class="px-4 py-2 bg-dark border border-gray-700 text-white font-medium rounded-xl whitespace-nowrap">Day
+                        3: Legs</button>
+                    <button
+                        class="px-4 py-2 bg-dark border border-gray-700 text-white font-medium rounded-xl whitespace-nowrap">Day
+                        4: Upper</button>
+                    <button
+                        class="px-4 py-2 bg-dark border border-gray-700 text-white font-medium rounded-xl whitespace-nowrap">Day
+                        5: Lower</button>
+                </div>
+
+                <div class="card p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">Chest &amp; Triceps</h2>
+
+                    <!-- Exercise List -->
+                    <div class="space-y-4 mb-8">
+                        <!-- Exercise 1 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Bench Press</h3>
+                                    <div class="flex items-center mt-1 text-gray-400">
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">4
+                                            sets</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">8-10
+                                            reps</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-2">Focus on full range of motion and controlled
+                                        negatives</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="p-2 text-gray-400 hover:text-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-400 hover:text-red-500">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise 2 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Incline Dumbbell Press</h3>
+                                    <div class="flex items-center mt-1 text-gray-400">
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">3
+                                            sets</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">10-12
+                                            reps</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-2">30° incline for upper chest focus</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="p-2 text-gray-400 hover:text-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-400 hover:text-red-500">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise 3 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Tricep Pushdowns</h3>
+                                    <div class="flex items-center mt-1 text-gray-400">
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">3
+                                            sets</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">12-15
+                                            reps</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-2">Use V-bar attachment, focus on contraction</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="p-2 text-gray-400 hover:text-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-400 hover:text-red-500">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Exercise Form -->
+                    <div class="bg-dark/30 border border-gray-800 rounded-xl p-5">
+                        <h3 class="text-lg font-medium mb-4">Add New Exercise</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Exercise Name</label>
+                                <input type="text" placeholder="e.g., Cable Flyes"
+                                    class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Sets</label>
+                                    <input type="number" placeholder="3"
+                                        class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Reps</label>
+                                    <input type="text" placeholder="8-12"
+                                        class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1">Notes (optional)</label>
+                            <textarea placeholder="Add any technique tips or reminders..." rows="2"
+                                class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+                        </div>
+                        <div class="flex justify-end">
+                            <button class="btn-primary">
+                                <i class="fas fa-plus mr-2"></i>Add Exercise
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-4 gradient-text">Shoulders</h2>
+
+                <div class="card p-6 md:p-8 mb-8">
+                    <!-- Exercise List -->
+                    <div class="space-y-4 mb-8">
+                        <!-- Exercise 1 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Overhead Press</h3>
+                                    <div class="flex items-center mt-1 text-gray-400">
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">4
+                                            sets</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">8-10
+                                            reps</span>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="p-2 text-gray-400 hover:text-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-400 hover:text-red-500">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise 2 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Lateral Raises</h3>
+                                    <div class="flex items-center mt-1 text-gray-400">
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">3
+                                            sets</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">12-15
+                                            reps</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-2">Keep elbows slightly bent, focus on form</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="p-2 text-gray-400 hover:text-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-400 hover:text-red-500">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Exercise Button -->
+                    <button
+                        class="w-full py-3 border border-dashed border-gray-600 rounded-xl text-gray-400 hover:border-primary hover:text-primary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add Exercise
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button onclick="showPage('split')" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Split
+                </button>
+                <button onclick="showPage('today')" class="btn-primary">
+                    Save &amp; Continue
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Today's Workout Page -->
+    <section id="today" class="page pt-6 md:pt-20 pb-24">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-3xl md:text-4xl font-bold">Today's Plan</h1>
+                    <div class="flex items-center">
+                        <span class="text-primary">
+                            <i class="fas fa-fire mr-1"></i>
+                        </span>
+                        <span class="text-lg font-medium">Day 1</span>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="gradient-text text-2xl font-bold">Push Day</h2>
+                        <div class="text-sm text-gray-400">
+                            <i class="far fa-calendar mr-1"></i> Monday, June 10
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Strip -->
+                <div class="overflow-x-auto pb-2 mb-6">
+                    <div class="flex space-x-2 min-w-max">
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-dark/50 border border-gray-800 min-w-[70px]">
+                            <span class="text-xs text-gray-400">Sun</span>
+                            <span class="text-lg font-medium">9</span>
+                            <span class="w-2 h-2 rounded-full bg-gray-700 mt-1"></span>
+                        </div>
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-primary/20 border border-primary min-w-[70px]">
+                            <span class="text-xs text-primary">Mon</span>
+                            <span class="text-lg font-medium">10</span>
+                            <span class="w-2 h-2 rounded-full bg-primary mt-1"></span>
+                        </div>
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-dark/50 border border-gray-800 min-w-[70px]">
+                            <span class="text-xs text-gray-400">Tue</span>
+                            <span class="text-lg font-medium">11</span>
+                            <span class="w-2 h-2 rounded-full bg-secondary mt-1"></span>
+                        </div>
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-dark/50 border border-gray-800 min-w-[70px]">
+                            <span class="text-xs text-gray-400">Wed</span>
+                            <span class="text-lg font-medium">12</span>
+                            <span class="w-2 h-2 rounded-full bg-accent mt-1"></span>
+                        </div>
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-dark/50 border border-gray-800 min-w-[70px]">
+                            <span class="text-xs text-gray-400">Thu</span>
+                            <span class="text-lg font-medium">13</span>
+                            <span class="w-2 h-2 rounded-full bg-primary mt-1"></span>
+                        </div>
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-dark/50 border border-gray-800 min-w-[70px]">
+                            <span class="text-xs text-gray-400">Fri</span>
+                            <span class="text-lg font-medium">14</span>
+                            <span class="w-2 h-2 rounded-full bg-secondary mt-1"></span>
+                        </div>
+                        <div
+                            class="day-item flex flex-col items-center p-3 rounded-xl bg-dark/50 border border-gray-800 min-w-[70px]">
+                            <span class="text-xs text-gray-400">Sat</span>
+                            <span class="text-lg font-medium">15</span>
+                            <span class="w-2 h-2 rounded-full bg-gray-700 mt-1"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workout Content -->
+            <div class="mb-8">
+                <div class="card p-6 md:p-8 mb-6">
+                    <h2 class="text-xl font-bold mb-4 gradient-text">Chest &amp; Triceps</h2>
+
+                    <div class="space-y-4">
+                        <!-- Exercise 1 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex items-start">
+                                <input type="checkbox" class="custom-checkbox mt-1 mr-3">
+                                <div class="flex-1">
+                                    <div class="flex justify-between">
+                                        <h3 class="font-semibold text-lg">Bench Press</h3>
+                                        <span class="text-primary font-medium">4 × 8-10</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">Focus on full range of motion and controlled
+                                        negatives</p>
+
+                                    <!-- Set Tracking -->
+                                    <div class="mt-3 grid grid-cols-4 gap-2">
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 1</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 2</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 3</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 4</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise 2 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex items-start">
+                                <input type="checkbox" class="custom-checkbox mt-1 mr-3">
+                                <div class="flex-1">
+                                    <div class="flex justify-between">
+                                        <h3 class="font-semibold text-lg">Incline Dumbbell Press</h3>
+                                        <span class="text-primary font-medium">3 × 10-12</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">30° incline for upper chest focus</p>
+
+                                    <!-- Set Tracking -->
+                                    <div class="mt-3 grid grid-cols-3 gap-2">
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 1</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 2</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 3</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise 3 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex items-start">
+                                <input type="checkbox" class="custom-checkbox mt-1 mr-3" checked="">
+                                <div class="flex-1 opacity-70">
+                                    <div class="flex justify-between">
+                                        <h3 class="font-semibold text-lg">Tricep Pushdowns</h3>
+                                        <span class="text-primary font-medium">3 × 12-15</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">Use V-bar attachment, focus on contraction</p>
+
+                                    <!-- Set Tracking -->
+                                    <div class="mt-3 grid grid-cols-3 gap-2">
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 1</span>
+                                            <input type="text" value="50"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 2</span>
+                                            <input type="text" value="55"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 3</span>
+                                            <input type="text" value="55"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6 md:p-8">
+                    <h2 class="text-xl font-bold mb-4 gradient-text">Shoulders</h2>
+
+                    <div class="space-y-4">
+                        <!-- Exercise 1 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex items-start">
+                                <input type="checkbox" class="custom-checkbox mt-1 mr-3">
+                                <div class="flex-1">
+                                    <div class="flex justify-between">
+                                        <h3 class="font-semibold text-lg">Overhead Press</h3>
+                                        <span class="text-primary font-medium">4 × 8-10</span>
+                                    </div>
+
+                                    <!-- Set Tracking -->
+                                    <div class="mt-3 grid grid-cols-4 gap-2">
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 1</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 2</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 3</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 4</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise 2 -->
+                        <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                            <div class="flex items-start">
+                                <input type="checkbox" class="custom-checkbox mt-1 mr-3">
+                                <div class="flex-1">
+                                    <div class="flex justify-between">
+                                        <h3 class="font-semibold text-lg">Lateral Raises</h3>
+                                        <span class="text-primary font-medium">3 × 12-15</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mt-1">Keep elbows slightly bent, focus on form</p>
+
+                                    <!-- Set Tracking -->
+                                    <div class="mt-3 grid grid-cols-3 gap-2">
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 1</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 2</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                        <div class="bg-dark rounded-lg p-2 text-center">
+                                            <span class="text-xs text-gray-400">Set 3</span>
+                                            <input type="text" placeholder="lbs"
+                                                class="w-full bg-transparent border-b border-gray-700 text-center text-sm py-1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button onclick="showPage('exercises')" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>Edit Exercises
+                </button>
+                <button onclick="showPage('progress')" class="btn-primary">
+                    <i class="fas fa-check mr-2"></i>Complete Workout
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress & Settings Page -->
+    <section id="progress" class="page pt-6 md:pt-20 pb-24">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl md:text-4xl font-bold mb-4">Progress &amp; Settings</h1>
+                <p class="text-gray-300 text-lg">Track your fitness journey and customize your workout plan</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex overflow-x-auto mb-6 border-b border-gray-800">
+                <button class="tab-btn px-4 py-3 font-medium text-primary border-b-2 border-primary">My
+                    Progress</button>
+                <button class="tab-btn px-4 py-3 font-medium text-gray-400">Edit Plan</button>
+                <button class="tab-btn px-4 py-3 font-medium text-gray-400">Reset Plan</button>
+                <div class="flex-grow"></div>
+                <button class="tab-btn px-4 py-3 font-medium text-gray-400">
+                    <i class="fas fa-moon mr-2"></i>Dark Mode
+                </button>
+            </div>
+
+            <!-- Progress Content -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold">Workouts</h3>
+                        <span class="text-2xl font-bold text-primary">12</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-dark/50 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full" style="width: 60%"></div>
+                        </div>
+                        <span class="ml-2 text-sm text-gray-400">60%</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">12 of 20 workouts completed this month</p>
+                </div>
+
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold">Consistency</h3>
+                        <span class="text-2xl font-bold text-secondary">85%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-dark/50 rounded-full h-2">
+                            <div class="bg-secondary h-2 rounded-full" style="width: 85%"></div>
+                        </div>
+                        <span class="ml-2 text-sm text-gray-400">85%</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">You've been consistent with your schedule</p>
+                </div>
+
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold">Streak</h3>
+                        <span class="text-2xl font-bold text-accent">5</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-dark/50 rounded-full h-2">
+                            <div class="bg-accent h-2 rounded-full" style="width: 50%"></div>
+                        </div>
+                        <span class="ml-2 text-sm text-gray-400">5 days</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Current workout streak (Best: 10)</p>
+                </div>
+            </div>
+
+            <!-- Progress Chart -->
+            <div class="card p-6 md:p-8 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Performance Trends</h2>
+                    <select
+                        class="bg-dark border border-gray-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option>Bench Press</option>
+                        <option>Squat</option>
+                        <option>Deadlift</option>
+                    </select>
+                </div>
+
+                <div class="h-64 relative">
+                    <!-- Chart Placeholder -->
+                    <svg class="w-full h-full" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Grid lines -->
+                        <line x1="50" y1="20" x2="50" y2="200" stroke="#333" stroke-width="1"></line>
+                        <line x1="50" y1="200" x2="550" y2="200" stroke="#333" stroke-width="1"></line>
+
+                        <!-- Y-axis labels -->
+                        <text x="30" y="200" fill="#999" font-size="12">0</text>
+                        <text x="30" y="155" fill="#999" font-size="12">50</text>
+                        <text x="30" y="110" fill="#999" font-size="12">100</text>
+                        <text x="30" y="65" fill="#999" font-size="12">150</text>
+                        <text x="30" y="20" fill="#999" font-size="12">200</text>
+
+                        <!-- X-axis labels -->
+                        <text x="50" y="220" fill="#999" font-size="12">May 1</text>
+                        <text x="150" y="220" fill="#999" font-size="12">May 8</text>
+                        <text x="250" y="220" fill="#999" font-size="12">May 15</text>
+                        <text x="350" y="220" fill="#999" font-size="12">May 22</text>
+                        <text x="450" y="220" fill="#999" font-size="12">May 29</text>
+
+                        <!-- Data line -->
+                        <polyline points="50,180 150,160 250,140 350,120 450,100 550,90" fill="none"
+                            stroke="url(#lineGradient)" stroke-width="3"></polyline>
+
+                        <!-- Data points -->
+                        <circle cx="50" cy="180" r="5" fill="#00E676"></circle>
+                        <circle cx="150" cy="160" r="5" fill="#00E676"></circle>
+                        <circle cx="250" cy="140" r="5" fill="#00E676"></circle>
+                        <circle cx="350" cy="120" r="5" fill="#00E676"></circle>
+                        <circle cx="450" cy="100" r="5" fill="#00E676"></circle>
+                        <circle cx="550" cy="90" r="5" fill="#00E676"></circle>
+
+                        <!-- Gradient definition -->
+                        <defs>
+                            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#00E676;stop-opacity:1"></stop>
+                                <stop offset="100%" style="stop-color:#00B0FF;stop-opacity:1"></stop>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Recent Workouts -->
+            <div class="card p-6 md:p-8 mb-8">
+                <h2 class="text-xl font-bold mb-4">Recent Workouts</h2>
+
+                <div class="space-y-4">
+                    <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Push Day</h3>
+                                <p class="text-sm text-gray-400">Monday, June 10</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-primary mr-2">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span class="text-sm font-medium">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Pull Day</h3>
+                                <p class="text-sm text-gray-400">Tuesday, June 9</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-primary mr-2">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span class="text-sm font-medium">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark/50 border border-gray-800 rounded-xl p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Legs Day</h3>
+                                <p class="text-sm text-gray-400">Wednesday, June 8</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-primary mr-2">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span class="text-sm font-medium">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button class="btn-secondary">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+                <button class="btn-primary">
+                    <i class="fas fa-file-export mr-2"></i>Export PDF
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Page Navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active-page');
+            });
+
+            // Show selected page
+            document.getElementById(pageId).classList.add('active-page');
+
+            // Update active nav button
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-primary');
+                btn.classList.add('text-gray-400');
+            });
+
+            // Find the button that triggered this and highlight it
+            const buttons = document.querySelectorAll('.nav-btn');
+            for (let btn of buttons) {
+                if (btn.onclick.toString().includes(pageId)) {
+                    btn.classList.remove('text-gray-400');
+                    btn.classList.add('text-primary');
+                }
+            }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Split Days Management
+        document.getElementById('split-days').addEventListener('change', function () {
+            const daysCount = parseInt(this.value);
+            const container = document.getElementById('days-container');
+
+            // In a real app, we would dynamically adjust the number of day cards
+            // For this demo, we'll just show/hide the existing ones
+            const dayCards = container.querySelectorAll('.day-card');
+
+            dayCards.forEach((card, index) => {
+                if (index < daysCount) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Custom checkbox functionality
+        document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const exerciseItem = this.closest('.bg-dark\\/50');
+                if (this.checked) {
+                    exerciseItem.querySelector('.flex-1').classList.add('opacity-70');
+                } else {
+                    exerciseItem.querySelector('.flex-1').classList.remove('opacity-70');
+                }
+            });
+        });
+    </script>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'954f03e466157a25',t:'MTc1MDc5NzM2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+    <iframe height="1" width="1"
+        style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe>
+
+</body>
+
+</html>
