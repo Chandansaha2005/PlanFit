@@ -95,7 +95,64 @@ function enableDeleteForAllTags() {
         });
     });
 }
-
 document.addEventListener('DOMContentLoaded', enableDeleteForAllTags);
 
+// get the day number to spilt page to exercises 
+document.getElementById('split-days').addEventListener('change', generateDayButtons);
+
+// Initial call on load
+window.addEventListener('DOMContentLoaded', generateDayButtons);
+
+function generateDayButtons() {
+    const dayCount = parseInt(document.getElementById('split-days').value);
+    const navContainer = document.getElementById('day-nav');
+    navContainer.innerHTML = ''; // Clear old buttons
+
+    for (let i = 1; i <= dayCount; i++) {
+        // Try to get the day name from input fields in card
+        const input = document.querySelectorAll('.day-card input[type="text"]')[i - 1];
+        const label = input ? input.value || `Day ${i}` : `Day ${i}`;
+
+        const btn = document.createElement('button');
+        btn.className =
+            'px-4 py-2 bg-dark border border-gray-700 text-white font-medium rounded-xl whitespace-nowrap';
+        btn.textContent = `Day ${i}: ${label}`;
+
+        // Highlight first button by default
+        if (i === 1) {
+            btn.classList.remove('bg-dark', 'text-white');
+            btn.classList.add('bg-primary', 'text-dark');
+        }
+
+        navContainer.appendChild(btn);
+    }
+}
+//add exercise
+function addExercise() {
+    const name = document.getElementById('exerciseName').value.trim();
+    const sets = document.getElementById('exerciseSets').value.trim();
+    const reps = document.getElementById('exerciseReps').value.trim();
+    const notes = document.getElementById('exerciseNotes').value.trim();
+
+    if (!name || !sets || !reps) {
+        alert('Please fill in Exercise Name, Sets, and Reps.');
+        return;
+    }
+
+    const newExercise = {
+        name,
+        sets,
+        reps,
+        notes
+    };
+
+    // For now: log to console
+    console.log('New Exercise Added:', newExercise);
+
+    // Optionally: clear form fields
+    document.getElementById('exerciseName').value = '';
+    document.getElementById('exerciseSets').value = '';
+    document.getElementById('exerciseReps').value = '';
+    document.getElementById('exerciseNotes').value = '';
+}
 

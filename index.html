@@ -523,36 +523,40 @@
                     <!-- Add Exercise Form -->
                     <div class="bg-dark/30 border border-gray-800 rounded-xl p-5">
                         <h3 class="text-lg font-medium mb-4">Add New Exercise</h3>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1">Exercise Name</label>
-                                <input type="text" placeholder="e.g., Cable Flyes"
+                                <input type="text" id="exerciseName" placeholder="e.g., Cable Flyes"
                                     class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium mb-1">Sets</label>
-                                    <input type="number" placeholder="3"
+                                    <input type="number" id="exerciseSets" placeholder="3"
                                         class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-1">Reps</label>
-                                    <input type="text" placeholder="8-12"
+                                    <input type="text" id="exerciseReps" placeholder="8-12"
                                         class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary">
                                 </div>
                             </div>
                         </div>
+
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1">Notes (optional)</label>
-                            <textarea placeholder="Add any technique tips or reminders..." rows="2"
+                            <textarea id="exerciseNotes" placeholder="Add any technique tips or reminders..." rows="2"
                                 class="w-full bg-dark border border-gray-700 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
                         </div>
+
                         <div class="flex justify-end">
-                            <button class="btn-primary">
+                            <button class="btn-primary" onclick="addExercise()" type="button">
                                 <i class="fas fa-plus mr-2"></i>Add Exercise
                             </button>
                         </div>
                     </div>
+
                 </div>
 
                 <h2 class="text-2xl font-bold mb-4 gradient-text">Shoulders</h2>
