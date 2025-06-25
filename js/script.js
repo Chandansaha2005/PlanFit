@@ -70,4 +70,32 @@ function addMuscleTag(inputId, tagContainerId) {
 
     document.getElementById(tagContainerId).appendChild(tag);
     input.value = '';
+    document.addEventListener('DOMContentLoaded', () => {
+        enableDeleteForAllTags();
+    });
+
 }
+// Function to attach delete buttons to all existing spans
+function enableDeleteForAllTags() {
+    const tagContainers = document.querySelectorAll('.flex.flex-wrap.gap-2');
+
+    tagContainers.forEach(container => {
+        container.querySelectorAll('span').forEach(tag => {
+            if (!tag.querySelector('button')) {
+                tag.classList.add('flex', 'items-center', 'justify-between', 'gap-2');
+
+                const btn = document.createElement('button');
+                btn.textContent = '×';
+                btn.className = 'ml-2 text-red-500 font-bold text-sm';
+                btn.type = 'button';
+                btn.onclick = () => tag.remove();
+
+                tag.appendChild(btn);
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', enableDeleteForAllTags);
+
+
