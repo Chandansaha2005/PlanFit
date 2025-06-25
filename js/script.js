@@ -56,3 +56,18 @@ document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
         }
     });
 });
+
+// Add Muscle Group Tag
+function addMuscleTag(inputId, tagContainerId) {
+    const input = document.getElementById(inputId);
+    const value = input.value.trim();
+    if (!value) return;
+
+    const tag = document.createElement('span');
+    tag.className = 'bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-sm flex items-center';
+    tag.innerHTML = `${value}
+        <button type="button" onclick="this.parentElement.remove()" class="ml-2 text-red-500 font-bold">×</button>`;
+
+    document.getElementById(tagContainerId).appendChild(tag);
+    input.value = '';
+}
